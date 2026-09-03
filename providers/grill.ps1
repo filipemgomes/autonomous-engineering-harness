@@ -1,0 +1,8 @@
+function Invoke-Discovery {
+  param([Parameter(Mandatory)][string]$Idea,[Parameter(Mandatory)][string]$OutputRoot)
+  if(!$env:GRILL_COMMAND){throw 'GRILL_COMMAND is required'}
+  $json=& powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$env:GRILL_COMMAND --idea '$Idea'" 2>&1;if($LASTEXITCODE){throw "Grill failed: $json"};try{$p=$json|ConvertFrom-Json}catch{throw "Invalid Grill JSON: $_"}
+  $need=@('constitution','adrs','spec','plan','tickets');foreach($n in $need){if(!$p.$n){throw "Grill response missing $n"}};$path=@{constitution='CONSTITUTION.md';adrs='adr';spec='spec.md';plan='plan.md';tickets='issues'};$written=@{};$base=[IO.Path]::GetFullPath($OutputRoot)
+  foreach($n in $need){if($n -in @('adrs','tickets')){$written[$n]=@();foreach($i in @($p.$n)){if(!$i.path -or [IO.Path]::IsPathRooted($i.path)){throw "Invalid $n path"};$f=[IO.Path]::GetFullPath((Join-Path $base (Join-Path $path[$n] $i.path)));if(!$f.StartsWith($base+'\',[StringComparison]::OrdinalIgnoreCase)){throw "Unsafe $n path"};New-Item -ItemType Directory -Force (Split-Path $f)|Out-Null;$i.content|Set-Content -Encoding UTF8 $f;$written[$n]+=$f}}else{$f=Join-Path $base $path[$n];New-Item -ItemType Directory -Force (Split-Path $f)|Out-Null;$p.$n|Set-Content -Encoding UTF8 $f;$written[$n]=$f}}
+  $checks=@{constitution='CONSTITUTION';adrs='ADR';spec='SPEC';plan='PLAN';tickets='TICKET'};$ok=$true;foreach($n in $need){$files=@($written[$n]);if(!$files.Count){$ok=$false;continue};$body=($files|ForEach-Object{Get-Content -Raw $_}) -join "`n";if($body -notmatch '(?im)IDEA:|derived-from|implements|trace' -or $body -notmatch "(?im)$($checks[$n])"){$ok=$false}};[pscustomobject]@{Project=$p.project;Status=if($ok){'READY'}else{'INVALID'};DeliveryAllowed=$ok;Artifacts=$written}
+}

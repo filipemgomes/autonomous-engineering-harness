@@ -11,5 +11,6 @@ Reusable engineering workflow for Codex and Claude Code.
 ```
 
 The harness installs only its own `.engineering` files and never overwrites
-existing `AGENTS.md` or `CLAUDE.md`. It does not include product specs,
-ADRs, Grill, or IDEA processing.
+existing `AGENTS.md` or `CLAUDE.md`. Discovery is core-agnostic: the bundled
+Grill provider reads an IDEA `Status` and the core permits Delivery only for
+exactly `READY`.
