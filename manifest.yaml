@@ -1,0 +1,25 @@
+schema: 1
+harness:
+  name: autonomous-engineering-harness
+  version: 0.1.0
+project:
+  tracker:
+    root: .engineering/issues
+    pattern: "NN-*.md"
+  truth_sources:
+    - CONTEXT.md
+    - docs/adr
+    - docs/specs
+    - docs/plans
+    - .engineering/issues
+checks:
+  build: null
+  test: null
+  lint: null
+integrations:
+  code_review: required
+  codebase_index: optional
+  ponytail: optional
+commit:
+  automatic: true
+  push: false
